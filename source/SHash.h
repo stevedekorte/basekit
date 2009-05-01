@@ -25,8 +25,8 @@ typedef struct
 	void *value;
 } SHashRecord;
 
-typedef int (SHashKeysEqualCallback)(void *, void *);
-typedef intptr_t (SHashHashforKeyCallback)(void *);
+typedef int (SHashEqualFunc)(void *, void *);
+typedef intptr_t (CHashHashFunc)(void *);
 
 typedef struct
 {
@@ -39,8 +39,8 @@ typedef struct
 	unsigned int mask;			// hash bit mask
 	SHashRecord nullRecord;		// for lookup misses
 	unsigned int balance;		// to balance tables
-	SHashKeysEqualCallback *keysEqual;
-	SHashHashforKeyCallback *hashForKey;
+	SHashEqualFunc *keysEqual;
+	CHashHashFunc *hashForKey;
 
 } SHash;
 
