@@ -1,9 +1,8 @@
-//metadoc CHash copyright Steve Dekorte 2002, Marc Fauconneau 2007
+//metadoc CHash copyright Steve Dekorte 2009
 //metadoc CHash license BSD revised
 /*metadoc CHash description
 	CHash - Cuckoo Hash
 	keys and values are references (they are not copied or freed)
-	key pointers are assumed unique
 */
 
 #ifdef CHASH_C
@@ -13,33 +12,6 @@
 #ifdef IO_DECLARE_INLINES
 
 #define Records_recordAt_(records, pos) (CHashRecord *)(records + (pos * sizeof(CHashRecord)))
-
-/*
-#include <stdio.h>
-
-#define CHASH_RECORDS_AT_(self, tableIndex, index) (self->records + self->tableSize*tableIndex + index)
-#define CHASH_RECORDS_AT_HASH_(self, tableIndex, hash) \
-(self->records + self->tableSize*tableIndex + (hash & self->mask))
-
-// simple hash functions, should be enough for pointers
-
-IOINLINE unsigned int CHash_hash(CHash *self, void *key)
-{
-	intptr_t k = self->hashForKey(key);
-	return k ^ (k >> 4);
-}
-
-IOINLINE unsigned int CHash_hash_more(CHash *self, unsigned int hash)
-{
-	return hash ^ (hash >> self->log2tableSize);
-}
-
-IOINLINE int CHashKey_hasKey_(CHash *self, void *key);
-IOINLINE void CHash_at_put_(CHash *self, void *key, void *value)
-IOINLINE void CHash_removeKey_(CHash *self, void *key)
-*/
-// do we really need to segment the records into two spaces?
-// if so just use a smaller mask and double the record2 pos
 
 IOINLINE CHashRecord *CHash_record1_(CHash *self, void *k)
 {
@@ -130,7 +102,7 @@ IOINLINE void CHash_at_put_(CHash *self, void *k, void *v)
 
 IOINLINE void CHash_shrinkIfNeeded(CHash *self)
 {
-	if(self->keyCount < self->size/8)
+	if(self->keyCount < self->size/4)
 	{
 		CHash_shrink(self);
 	}

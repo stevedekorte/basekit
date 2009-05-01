@@ -1,5 +1,4 @@
-
-//metadoc CHash copyright Steve Dekorte 2002
+//metadoc CHash copyright Steve Dekorte 2009
 //metadoc CHash license BSD revised
 
 #define CHASH_C
@@ -67,6 +66,7 @@ void CHash_show(CHash *self)
 
 void CHash_free(CHash *self)
 {
+	io_free(self->records);
 	io_free(self);
 }
 
@@ -140,7 +140,7 @@ void CHash_grow(CHash *self)
 
 void CHash_shrink(CHash *self)
 {
-	//CHash_resizeTo_(self, self->size / 2);
+	CHash_resizeTo_(self, self->size / 2);
 }
 
 void CHash_removeKey_(CHash *self, void *k)
