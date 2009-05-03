@@ -31,7 +31,7 @@ typedef struct
 	CHashHashFunc *hash1;
 	CHashHashFunc *hash2;
 	CHashEqualFunc *equals;
-	intptr_t modMask;
+	intptr_t mask;
 } CHash;
 
 BASEKIT_API CHash *CHash_new(void);

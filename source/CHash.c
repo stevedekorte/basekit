@@ -1,5 +1,6 @@
 //metadoc CHash copyright Steve Dekorte 2009
 //metadoc CHash license BSD revised
+//metadoc PHash notes Suggestion to use cuckoo hash and original implementation by Marc Fauconneau 
 
 #define CHASH_C
 #include "CHash.h"
@@ -49,7 +50,7 @@ void CHash_setSize_(CHash *self, size_t size)
 
 void CHash_updateMask(CHash *self)
 {
-	self->modMask = (intptr_t)(self->size - 1);
+	self->mask = (intptr_t)(self->size - 1);
 }
 
 void CHash_show(CHash *self)
@@ -59,7 +60,7 @@ void CHash_show(CHash *self)
 	printf("CHash records:\n");
 	for(i = 0; i < self->size; i++)
 	{
-		CHashRecord *r = Records_recordAt_(self->records, i);
+		CHashRecord *r = CRecords_recordAt_(self->records, i);
 		printf("  %i: %i %i\n", i, r->k, r->v);
 	}
 }
@@ -112,7 +113,7 @@ void CHash_insertRecords(CHash *self, unsigned char *oldRecords, size_t oldSize)
 	
 	for (i = 0; i < oldSize; i ++)
 	{
-		CHashRecord *r = Records_recordAt_(oldRecords, i);
+		CHashRecord *r = CRecords_recordAt_(oldRecords, i);
 		
 		if (r->k)
 		{
@@ -184,13 +185,3 @@ size_t CHash_memorySize(CHash *self)
 void CHash_compact(CHash *self)
 {
 }
-
-/*
-void *CHash_firstKeyForValue_(CHash *self, void *v)
-{
-}
-
-void CHash_removeValue_(CHash *self, void *value)
-{
-}
-*/

@@ -11,20 +11,20 @@
 #include "Common_inline.h"
 #ifdef IO_DECLARE_INLINES
 
-#define Records_recordAt_(records, pos) (CHashRecord *)(records + (pos * sizeof(CHashRecord)))
+#define CRecords_recordAt_(records, pos) (CHashRecord *)(records + (pos * sizeof(CHashRecord)))
 
 IOINLINE CHashRecord *CHash_record1_(CHash *self, void *k)
 {
-	// the << 1 before the mask ensures an even pos
-	size_t pos = (self->hash1(k) << 1) & self->modMask;
-	return Records_recordAt_(self->records, pos);
+	// the ~ | 0x1 before the mask ensures an even pos
+	size_t pos = (~(self->hash1(k) | 0x1)) & self->mask;
+	return CRecords_recordAt_(self->records, pos);
 }
 
 IOINLINE CHashRecord *CHash_record2_(CHash *self, void *k)
 {
 	// the | 0x1 before the mask ensures an odd pos
-	size_t pos = (self->hash2(k) | 0x1) & self->modMask;
-	return Records_recordAt_(self->records, pos);
+	size_t pos = (self->hash2(k) | 0x1) & self->mask;
+	return CRecords_recordAt_(self->records, pos);
 }
 
 IOINLINE void *CHash_at_(CHash *self, void *k)
@@ -133,7 +133,7 @@ IOINLINE void CHash_clean(CHash *self)
 	\
 	for (_i = 0; _i < _size; _i ++)\
 	{\
-		CHashRecord *_record = Records_recordAt_(_records, _i);\
+		CHashRecord *_record = CRecords_recordAt_(_records, _i);\
 		if (_record->k)\
 		{\
 			pkey = _record->k;\
