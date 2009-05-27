@@ -1,6 +1,6 @@
 //metadoc CHash copyright Steve Dekorte 2009
 //metadoc CHash license BSD revised
-//metadoc PHash notes Suggestion to use cuckoo hash and original implementation by Marc Fauconneau 
+//metadoc CHash notes Suggestion to use cuckoo hash and original implementation by Marc Fauconneau 
 
 #define CHASH_C
 #include "CHash.h"
@@ -86,28 +86,40 @@ void CHash_setEqualFunc_(CHash *self, CHashEqualFunc *f)
 	self->equals = f;
 }
 
-void CHash_insert_(CHash *self, CHashRecord *x)
+int CHash_insert_(CHash *self, CHashRecord *x)
 {	
 	int n;
+	size_t pos;
+	//printf("insert\n");
 	
 	for (n = 0; n < CHASH_MAXLOOP; n ++)
 	{ 
 		CHashRecord *r;
 		
+		//pos = self->hash1(x->k) & self->mask;
+		//printf("1 x->k = %p-> %i\n", x->k, pos);
 		r = CHash_record1_(self, x->k);
 		CHashRecord_swapWith_(x, r); //x ↔ T1 [h1 (x)] 
-		if(x->k == 0x0) { self->keyCount ++; return; }
-		 
+		if(x->k == 0x0) { self->keyCount ++; return 0; }
+
+		//pos = self->hash2(x->k) & self->mask;
+		//printf("2 x->k = %p-> %i\n\n", x->k, pos);		 
 		r = CHash_record2_(self, x->k);
 		CHashRecord_swapWith_(x, r); //x ↔ T2 [h2 (x)] 
-		if(x->k == 0x0) { self->keyCount ++; return; }
+		if(x->k == 0x0) { self->keyCount ++; return 0; }
+	}
+	
+	if(self->isResizing) 
+	{
+		return -1;
 	}
 	
 	CHash_grow(self); 
 	CHash_at_put_(self, x->k, x->v);
+	return 0;
 }
 
-void CHash_insertRecords(CHash *self, unsigned char *oldRecords, size_t oldSize)
+int CHash_insertRecords(CHash *self, unsigned char *oldRecords, size_t oldSize)
 {
 	int i;
 	
@@ -117,21 +129,41 @@ void CHash_insertRecords(CHash *self, unsigned char *oldRecords, size_t oldSize)
 		
 		if (r->k)
 		{
-			CHash_at_put_(self, r->k, r->v);
+			if(CHash_at_put_(self, r->k, r->v)) return 1;
 		}
 	}
+	return 0;
 }
 
-void CHash_resizeTo_(CHash *self, size_t newSize)
+int CHash_resizeTo_(CHash *self, size_t newSize)
 {
 	unsigned char *oldRecords = self->records;
 	size_t oldSize = self->size;
-	self->size = newSize;
-	self->records = io_calloc(1, sizeof(CHashRecord) * self->size);
-	self->keyCount = 0;
-	CHash_updateMask(self);
-	CHash_insertRecords(self, oldRecords, oldSize);
+
+	self->isResizing = 1;
+
+	//printf("%p resizeTo %i/%i %i%%\n", (void *)self, self->keyCount, self->size, (int)(100.0*CHash_density(self)));
+		
+	do
+	{
+		self->size = newSize;
+		self->records = io_calloc(1, sizeof(CHashRecord) * self->size);
+		self->keyCount = 0;
+		CHash_updateMask(self);
+		if(CHash_insertRecords(self, oldRecords, oldSize) == 0)
+		{
+			self->isResizing = 0;
+		}
+		else
+		{
+			//printf("%p grow collision %i/%i\n", (void *)self, self->keyCount, self->size);
+			newSize *= 2;
+			io_free(self->records);
+		}
+	} while(self->isResizing);
+	
 	io_free(oldRecords);
+	return 0;
 }
 
 void CHash_grow(CHash *self)
@@ -141,7 +173,8 @@ void CHash_grow(CHash *self)
 
 void CHash_shrink(CHash *self)
 {
-	CHash_resizeTo_(self, self->size / 2);
+	//printf("%p shrink %i/%i\n", (void *)self, self->keyCount, self->size);
+	//CHash_resizeTo_(self, self->size / 2);
 }
 
 void CHash_removeKey_(CHash *self, void *k)
@@ -185,3 +218,11 @@ size_t CHash_memorySize(CHash *self)
 void CHash_compact(CHash *self)
 {
 }
+
+float CHash_density(CHash *self)
+{
+	float kc = (float)self->keyCount;
+	float size = (float)self->size;
+	return kc/size;
+}
+

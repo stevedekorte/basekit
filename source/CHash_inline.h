@@ -16,32 +16,35 @@
 IOINLINE CHashRecord *CHash_record1_(CHash *self, void *k)
 {
 	// the ~ | 0x1 before the mask ensures an even pos
-	size_t pos = (~(self->hash1(k) | 0x1)) & self->mask;
+	size_t pos = self->hash1(k) & self->mask;
+	//printf("pos1 %i/%i\n", pos, self->size);
 	return CRecords_recordAt_(self->records, pos);
 }
 
 IOINLINE CHashRecord *CHash_record2_(CHash *self, void *k)
 {
 	// the | 0x1 before the mask ensures an odd pos
-	size_t pos = (self->hash2(k) | 0x1) & self->mask;
+	size_t pos = self->hash2(k) & self->mask;
+	//printf("pos2 %i/%i\n", pos, self->size);
 	return CRecords_recordAt_(self->records, pos);
 }
 
 IOINLINE void *CHash_at_(CHash *self, void *k)
 {
-	CHashRecord *r1 = CHash_record1_(self, k);
-	CHashRecord *r2;
+	CHashRecord *r;
+	
+	 r = CHash_record1_(self, k);
 
-	if(r1->k && self->equals(k, r1->k))
+	if(r->k && self->equals(k, r->k))
 	{
-		return r1->v;
+		return r->v;
 	}
 	
-	r2 = CHash_record2_(self, k);
+	r = CHash_record2_(self, k);
 	
-	if(r2->k && self->equals(k, r2->k))
+	if(r->k && self->equals(k, r->k))
 	{
-		return r2->v;
+		return r->v;
 	}
 	
 	return 0x0;
@@ -57,52 +60,54 @@ IOINLINE int CHashKey_hasKey_(CHash *self, void *key)
 	return CHash_at_(self, key) != NULL;
 }
 
-IOINLINE void CHash_at_put_(CHash *self, void *k, void *v)
+IOINLINE int CHash_at_put_(CHash *self, void *k, void *v)
 {
-	CHashRecord *r1 = CHash_record1_(self, k);
-	CHashRecord *r2;	
+	CHashRecord *r;
 	
-	if(!r1->k)
+	r = CHash_record1_(self, k);
+	
+	if(!r->k)
 	{
-		r1->k = k;
-		r1->v = v;
+		r->k = k;
+		r->v = v;
 		self->keyCount ++;
-		return;
+		return 0;
 	}
 	
-	if(self->equals(k, r1->k))
+	if(k == r->k || self->equals(k, r->k))
 	{
-		r1->v = v;
-		return;
+		r->v = v;
+		return 0;
 	}
 
-	r2 = CHash_record2_(self, k);
+	r = CHash_record2_(self, k);
 
-	if(!r2->k)
+	if(!r->k)
 	{
-		r2->k = k;
-		r2->v = v;
+		r->k = k;
+		r->v = v;
 		self->keyCount ++;
-		return;
+		return 0;
 	}
 	
-	if(self->equals(k, r2->k))
+	if(k == r->k || self->equals(k, r->k))
 	{
-		r2->v = v;
-		return;
+		r->v = v;
+		return 0;
 	}
 	
+
 	{
-	CHashRecord x;
-	x.k = k;
-	x.v = v;
-	CHash_insert_(self, &x);
+		CHashRecord x;
+		x.k = k;
+		x.v = v;
+		return CHash_insert_(self, &x);
 	}
 }
 
 IOINLINE void CHash_shrinkIfNeeded(CHash *self)
 {
-	if(self->keyCount < self->size/4)
+	if(self->keyCount < self->size/5)
 	{
 		CHash_shrink(self);
 	}
