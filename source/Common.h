@@ -48,11 +48,13 @@ typedef long long int64_t;
 
 #define ON_WINDOWS 1
 
-// Enable fibers
-#define _WIN32_WINNT 0x0400
-
 // this also includes windows.h
 #include <winsock2.h>
+
+// Enable fibers
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0400
+#endif
 
 #if !defined(__MINGW32__)
 #if defined(BUILDING_BASEKIT_DLL) || defined(BUILDING_IOVMALL_DLL)
@@ -75,6 +77,12 @@ as errors in my dev settings */
 
 #pragma warning( disable : 4244 )
 /* warning C4244: 'function' : conversion from 'double ' to 'int ', possible loss of data */
+
+#pragma warning( disable : 4996 )
+/* warning C4996: 'function' : This function or variable may be unsafe. Consider using 'function_s' instead */
+
+#pragma warning( disable : 4018 )
+/* warning C4018: 'operator' : signed/unsigned mismatch */
 
 /*#pragma warning( disable : 4090 ) */
 /* warning C4090: 'function' : different 'const' qualifiers  */
