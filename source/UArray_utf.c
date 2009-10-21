@@ -126,7 +126,13 @@ int UArray_isMultibyte(const UArray *self)
 {
 	if (self->encoding == CENCODING_UTF8)
 	{
-		UARRAY_INTFOREACH(self, i, v, if (ismbchar((int)v)) return 1; );
+		size_t i, max = UArray_sizeInBytes(self); 
+		const uint8_t *bytes = UArray_bytes(self);
+		for (i = 0; i < max; i ++)
+		{
+			if (UArray_SizeOfUTF8Char(bytes + i) > 1) return 1; 
+		}
+		//UARRAY_INTFOREACH(self, i, v, if (ismbchar((int)v)) return 1; );
 	}
 
 	return 0;
@@ -150,11 +156,11 @@ UArray *UArray_asNumberArrayString(const UArray *self)
 
 		if(UArray_isFloatType(self))
 		{
-			sprintf(s, "%f", v);
+			sprintf(s, "%f", (double)v);
 		}
 		else
 		{
-			sprintf(s, "%i", v);
+			sprintf(s, "%i", (int)v);
 		}
 
 		if(i != UArray_size(self) -1 ) strcat(s, ", ");
@@ -172,11 +178,11 @@ UArray *UArray_asUTF8(const UArray *self)
 	UArray_setSize_(out, self->size * 4);
 
 	{
-		ConversionFlags options = lenientConversion;
+		//ConversionFlags options = lenientConversion;
 		void *sourceStart = self->data;
-		void *sourceEnd   = self->data + self->size * self->itemSize;
+		//void *sourceEnd   = self->data + self->size * self->itemSize;
 		UTF8 *targetStart = out->data;
-		UTF8 *targetEnd   = out->data + out->size * out->itemSize;
+		//UTF8 *targetEnd   = out->data + out->size * out->itemSize;
 		size_t outSize;
 
 		switch(self->encoding)
@@ -242,7 +248,7 @@ UArray *UArray_asUCS2(const UArray *self)
 	
 	if ((numChars > 0) && (numChars > countedChars*2))
 	{
-		printf("UArray_asUCS2 error: numChars (%i) > countedChars (2*%i)\n", numChars, countedChars);
+		printf("UArray_asUCS2 error: numChars (%i) > countedChars (2*%i)\n", (int)numChars, (int)countedChars);
 		printf("Exiting because we may have overwritten the usc2 decode output buffer.");
 		exit(-1);
 	}
@@ -269,7 +275,7 @@ UArray *UArray_asUCS4(const UArray *self)
 
 	if ((numChars > 0) && (numChars > countedChars*2))
 	{
-		printf("UArray_asUCS4 error: numChars %i != countedChars %i\n", numChars, countedChars);
+		printf("UArray_asUCS4 error: numChars %i != countedChars %i\n", (int)numChars, (int)countedChars);
 		exit(-1);
 	}
 	

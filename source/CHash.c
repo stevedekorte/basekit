@@ -61,7 +61,7 @@ void CHash_show(CHash *self)
 	for(i = 0; i < self->size; i++)
 	{
 		CHashRecord *r = CRecords_recordAt_(self->records, i);
-		printf("  %p: %p %p\n", i, r->k, r->v);
+		printf("  %i: %p %p\n", (int)i, r->k, r->v);
 	}
 }
 
@@ -199,6 +199,13 @@ void CHash_removeKey_(CHash *self, void *k)
 		CHash_shrinkIfNeeded(self);
 		return;
 	}
+}
+
+void CHash_clear(CHash *self)
+{
+	memset(self->records, 0x0, self->size * sizeof(CHashRecord));
+	self->keyCount = 0;
+	CHash_shrinkIfNeeded(self);
 }
 
 size_t CHash_size(CHash *self) // actually the keyCount
